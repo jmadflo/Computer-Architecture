@@ -37,7 +37,7 @@ class CPU:
                     instruction = instruction.split()[0]
                 else:
                     instruction = instruction.replace('\n', '')
-                self.ram[address] = instruction
+                self.ram[address] = int(instruction, 2)
                 address += 1
             # print(self.ram)
                 
@@ -53,7 +53,8 @@ class CPU:
 
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
-        #elif op == "SUB": etc
+        elif op == "MUL":
+            self.reg[reg_a] *= self.reg[reg_b]
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -76,6 +77,13 @@ class CPU:
             print(" %02X" % self.reg[i], end='')
 
         print()
+    
+    # def LDI():
+    #     reg_slot = self.ram[self.pc + 1]
+    #     val = self.ram[self.pc + 2]
+    #     self.reg[reg_slot] = val
+    #     self.pc += 3
+
 
     def run(self):
         """Run the CPU."""
@@ -85,14 +93,17 @@ class CPU:
 
             if instruction == 0b00000001: # HLT
                 running = False
-
             elif instruction == 0b10000010: # LDI
                 reg_slot = self.ram[self.pc + 1]
                 val = self.ram[self.pc + 2]
                 self.reg[reg_slot] = val
                 self.pc += 3
-
             elif instruction == 0b01000111: # PRN
                 reg_slot = self.ram[self.pc + 1]
                 print(self.reg[reg_slot])
                 self.pc += 2
+            elif instruction == 0b10100010: # MUL
+                reg_slot_1 = self.ram[self.pc + 1]
+                reg_slot_2 = self.ram[self.pc + 2]
+                self.alu('MUL', reg_slot_1, reg_slot_2)
+                self.pc += 3
