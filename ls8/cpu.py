@@ -71,13 +71,16 @@ class CPU:
         running = True
         while running:
             instruction = self.ram_read(self.pc)
+
             if instruction == 0b00000001: # HLT
                 running = False
+
             elif instruction == 0b10000010: # LDI
                 reg_slot = self.ram[self.pc + 1]
                 val = self.ram[self.pc + 2]
                 self.reg[reg_slot] = val
                 self.pc += 3
+                
             elif instruction == 0b01000111: # PRN
                 reg_slot = self.ram[self.pc + 1]
                 print(self.reg[reg_slot])
