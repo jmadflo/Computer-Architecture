@@ -88,6 +88,7 @@ class CPU:
     def run(self):
         """Run the CPU."""
         running = True
+        stack_pointer = 7 # dictated in the specs
         while running:
             instruction = self.ram_read(self.pc)
 
@@ -107,3 +108,17 @@ class CPU:
                 reg_slot_2 = self.ram[self.pc + 2]
                 self.alu('MUL', reg_slot_1, reg_slot_2)
                 self.pc += 3
+            elif instruction == 0b01000101: # PUSH
+                self.reg[stack_pointer] -= 1
+                reg_slot = self.ram[self.pc + 1]
+                value = self.reg[reg_slot]
+                new_value_address = self.reg[stack_pointer]
+                self.ram[new_value_address] = value
+                self.pc += 2
+            elif instruction == 0b01000110: # POP
+                value_address = self.reg[stack_pointer]
+                value = self.ram[value_address]
+                reg_slot = self.ram[self.pc + 1]
+                self.reg[reg_slot] = value
+                self.reg[stack_pointer] += 1
+                self.pc += 2
