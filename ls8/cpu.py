@@ -10,6 +10,7 @@ class CPU:
         self.ram = [0] * 256
         self.reg = [0] * 8
         self.pc = 0
+        self.stack_pointer = 7 # dictated in the specs
 
     def load(self):
         """Load a program into memory."""
@@ -33,8 +34,11 @@ class CPU:
         #     address += 1
         with open(sys.argv[1], 'r') as program:
             for instruction in program:
+                # print(instruction)
                 if '#' in instruction:
                     instruction = instruction.split()[0]
+                    if instruction == '#':
+                        continue
                 else:
                     instruction = instruction.replace('\n', '')
                 self.ram[address] = int(instruction, 2)
@@ -77,48 +81,69 @@ class CPU:
             print(" %02X" % self.reg[i], end='')
 
         print()
-    
-    # def LDI():
-    #     reg_slot = self.ram[self.pc + 1]
-    #     val = self.ram[self.pc + 2]
-    #     self.reg[reg_slot] = val
-    #     self.pc += 3
-
 
     def run(self):
         """Run the CPU."""
         running = True
-        stack_pointer = 7 # dictated in the specs
+        operations = {
+            'HLT': 0b00000001,
+            'LDI': 0b10000010,
+            'PRN': 0b01000111,
+            'MUL': 0b10100010,
+            'PUSH': 0b01000101,
+            'POP': 0b01000110,
+            'CALL': 0b01010000,
+            'RET': 0b00010001,
+            'ADD': 0b10100000
+        }
         while running:
             instruction = self.ram_read(self.pc)
 
-            if instruction == 0b00000001: # HLT
+            if instruction == operations['HLT']:
                 running = False
-            elif instruction == 0b10000010: # LDI
+            elif instruction == operations['LDI']:
                 reg_slot = self.ram[self.pc + 1]
                 val = self.ram[self.pc + 2]
                 self.reg[reg_slot] = val
                 self.pc += 3
-            elif instruction == 0b01000111: # PRN
+            elif instruction == operations['PRN']:
                 reg_slot = self.ram[self.pc + 1]
                 print(self.reg[reg_slot])
                 self.pc += 2
-            elif instruction == 0b10100010: # MUL
+            elif instruction == operations['MUL']:
                 reg_slot_1 = self.ram[self.pc + 1]
                 reg_slot_2 = self.ram[self.pc + 2]
                 self.alu('MUL', reg_slot_1, reg_slot_2)
                 self.pc += 3
-            elif instruction == 0b01000101: # PUSH
-                self.reg[stack_pointer] -= 1
+            elif instruction == operations['PUSH']:
+                self.reg[self.stack_pointer] -= 1
                 reg_slot = self.ram[self.pc + 1]
                 value = self.reg[reg_slot]
-                new_value_address = self.reg[stack_pointer]
+                new_value_address = self.reg[self.stack_pointer]
                 self.ram[new_value_address] = value
                 self.pc += 2
-            elif instruction == 0b01000110: # POP
-                value_address = self.reg[stack_pointer]
+            elif instruction == operations['POP']:
+                value_address = self.reg[self.stack_pointer]
                 value = self.ram[value_address]
                 reg_slot = self.ram[self.pc + 1]
                 self.reg[reg_slot] = value
-                self.reg[stack_pointer] += 1
+                self.reg[self.stack_pointer] += 1
                 self.pc += 2
+            elif instruction == operations['CALL']:
+                self.reg[self.stack_pointer] -= 1
+                return_address = self.pc + 2
+                value_address = self.reg[self.stack_pointer]
+                self.ram[value_address] = return_address
+                reg_slot = self.ram[self.pc + 1]
+                subroutine_address = self.reg[reg_slot]
+                self.pc = subroutine_address
+            elif instruction == operations['RET']:
+                value_address = self.reg[self.stack_pointer]
+                return_address = self.ram[value_address]
+                self.reg[self.stack_pointer] += 1
+                self.pc = return_address
+            elif instruction == operations['ADD']:
+                reg_slot_1 = self.ram[self.pc + 1]
+                reg_slot_2 = self.ram[self.pc + 2]
+                self.alu('ADD', reg_slot_1, reg_slot_2)
+                self.pc += 3
