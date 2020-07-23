@@ -116,8 +116,8 @@ class CPU:
                 self.ram[new_value_address] = value
                 self.pc += 2
             elif instruction == 0b01000110: # POP
-                new_value_address = self.reg[stack_pointer]
-                value = self.ram[new_value_address]
+                value_address = self.reg[stack_pointer]
+                value = self.ram[value_address]
                 reg_slot = self.ram[self.pc + 1]
                 self.reg[reg_slot] = value
                 self.reg[stack_pointer] += 1
